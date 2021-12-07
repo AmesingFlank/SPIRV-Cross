@@ -26,6 +26,7 @@
 #include "spirv_glsl.hpp"
 #include "spirv_hlsl.hpp"
 #include "spirv_msl.hpp"
+#include "spirv_wgsl.hpp"
 #include "spirv_parser.hpp"
 #include "spirv_reflect.hpp"
 #include <algorithm>
@@ -698,6 +699,7 @@ struct CLIArguments
 	bool cpp = false;
 	string reflect;
 	bool msl = false;
+	bool wgsl = false;
 	bool hlsl = false;
 	bool hlsl_compat = false;
 	bool hlsl_support_nonzero_base = false;
@@ -1157,6 +1159,8 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 	}
 	else if (args.hlsl)
 		compiler.reset(new CompilerHLSL(move(spirv_parser.get_parsed_ir())));
+	else if (args.wgsl)
+		compiler.reset(new CompilerWGSL(move(spirv_parser.get_parsed_ir())));
 	else
 	{
 		combined_image_samplers = !args.vulkan_semantics;
@@ -1485,6 +1489,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--force-zero-initialized-variables",
 	        [&args](CLIParser &) { args.force_zero_initialized_variables = true; });
 	cbs.add("--msl", [&args](CLIParser &) { args.msl = true; });
+	cbs.add("--wgsl", [&args](CLIParser &) { args.wgsl = true; });
 	cbs.add("--hlsl", [&args](CLIParser &) { args.hlsl = true; });
 	cbs.add("--hlsl-enable-compat", [&args](CLIParser &) { args.hlsl_compat = true; });
 	cbs.add("--hlsl-support-nonzero-basevertex-baseinstance",

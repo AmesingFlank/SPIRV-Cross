@@ -42,6 +42,7 @@ option(SPIRV_CROSS_ENABLE_TESTS "Enable SPIRV-Cross tests." ON)
 option(SPIRV_CROSS_ENABLE_GLSL "Enable GLSL support." ON)
 option(SPIRV_CROSS_ENABLE_HLSL "Enable HLSL target support." ON)
 option(SPIRV_CROSS_ENABLE_MSL "Enable MSL target support." ON)
+option(SPIRV_CROSS_ENABLE_WGSL "Enable WGSL target support." ON)
 option(SPIRV_CROSS_ENABLE_CPP "Enable C++ target support." ON)
 option(SPIRV_CROSS_ENABLE_REFLECT "Enable JSON reflection target support." ON)
 option(SPIRV_CROSS_ENABLE_C_API "Enable C API wrapper support in static library." ON)
@@ -230,6 +231,10 @@ set(spirv-cross-msl-sources
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_msl.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_msl.hpp)
 
+set(spirv-cross-wgsl-sources
+		${CMAKE_CURRENT_SOURCE_DIR}/spirv_wgsl.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/spirv_wgsl.hpp)
+
 set(spirv-cross-hlsl-sources
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_hlsl.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_hlsl.hpp)
@@ -282,6 +287,16 @@ if (SPIRV_CROSS_STATIC)
 		endif()
 	endif()
 
+	if (SPIRV_CROSS_ENABLE_WGSL)
+		spirv_cross_add_library(spirv-cross-wgsl spirv_cross_wgsl STATIC
+				${spirv-cross-wgsl-sources})
+		if (SPIRV_CROSS_ENABLE_GLSL)
+			target_link_libraries(spirv-cross-wgsl PRIVATE spirv-cross-glsl)
+		else()
+			message(FATAL_ERROR "Must enable GLSL support to enable WGSL support.")
+		endif()
+	endif()
+
 	if (SPIRV_CROSS_ENABLE_HLSL)
 		spirv_cross_add_library(spirv-cross-hlsl spirv_cross_hlsl STATIC
 				${spirv-cross-hlsl-sources})
@@ -317,6 +332,11 @@ if (SPIRV_CROSS_STATIC)
 		if (SPIRV_CROSS_ENABLE_MSL)
 			target_link_libraries(spirv-cross-c PRIVATE spirv-cross-msl)
 			target_compile_definitions(spirv-cross-c PRIVATE SPIRV_CROSS_C_API_MSL=1)
+		endif()
+
+		if (SPIRV_CROSS_ENABLE_WGSL)
+			target_link_libraries(spirv-cross-c PRIVATE spirv-cross-wgsl)
+			target_compile_definitions(spirv-cross-c PRIVATE SPIRV_CROSS_C_API_WGSL=1)
 		endif()
 
 		if (SPIRV_CROSS_ENABLE_CPP)
@@ -373,6 +393,15 @@ if (SPIRV_CROSS_SHARED)
 			message(FATAL_ERROR "Must enable GLSL support to enable MSL support.")
 		endif()
 		target_compile_definitions(spirv-cross-c-shared PRIVATE SPIRV_CROSS_C_API_MSL=1)
+	endif()
+
+	if (SPIRV_CROSS_ENABLE_WGSL)
+		if (SPIRV_CROSS_ENABLE_GLSL)
+			target_sources(spirv-cross-c-shared PRIVATE ${spirv-cross-wgsl-sources})
+		else()
+			message(FATAL_ERROR "Must enable GLSL support to enable WGSL support.")
+		endif()
+		target_compile_definitions(spirv-cross-c-shared PRIVATE SPIRV_CROSS_C_API_WGSL=1)
 	endif()
 
 	if (SPIRV_CROSS_ENABLE_CPP)
@@ -450,6 +479,7 @@ if (SPIRV_CROSS_CLI)
 			spirv-cross-cpp
 			spirv-cross-reflect
 			spirv-cross-msl
+			spirv-cross-wgsl
 			spirv-cross-util
 			spirv-cross-core)
 
